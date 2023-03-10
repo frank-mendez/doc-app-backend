@@ -13,15 +13,19 @@ export class AuthService {
 
   async validateUser(authDto: AuthDto): Promise<any> {
     const { username, password } = authDto;
-    const user = await this.userService.findOne(username);
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-    const passwordValid = await bcrypt.compare(password, user.password);
+    try {
+      const user = await this.userService.findOne(username);
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      const passwordValid = await bcrypt.compare(password, user.password);
 
-    if (user && passwordValid) {
-      return user;
-    } else {
+      if (user && passwordValid) {
+        return user;
+      } else {
+        throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN);
+      }
+    } catch (error) {
       throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN);
     }
   }
