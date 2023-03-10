@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserRegisterDto } from './dto/user-register.dto';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 
 @Controller('users')

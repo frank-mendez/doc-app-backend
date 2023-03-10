@@ -1,10 +1,10 @@
-import { User as UserModel, UserSchema } from './../schemas/user.schema';
+import { User as UserModel } from './../schemas/user.schema';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { UserService } from './../user/user.service';
 import { TestingModule, Test } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { getModelToken } from '@nestjs/mongoose';
 
 const mockUser = {
