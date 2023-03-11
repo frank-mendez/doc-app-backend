@@ -15,9 +15,7 @@ export class AuthService {
     const { username, password } = authDto;
     try {
       const user = await this.userService.findOne(username);
-      if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
+
       const passwordValid = await bcrypt.compare(password, user.password);
 
       if (user && passwordValid) {
