@@ -18,6 +18,7 @@ export class AuthService {
     private readonly userService: UserService,
     @InjectModel(EmailVerification.name)
     private readonly emailVerificationModel: Model<EmailVerificationDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private jwtService: JwtService
   ) {}
 
@@ -25,13 +26,19 @@ export class AuthService {
     const { username, password } = authDto
     try {
       const user = await this.userService.findOne(username)
+      if (user && user.isEmailVerified) {
+        const passwordValid = await bcrypt.compare(password, user.password)
 
-      const passwordValid = await bcrypt.compare(password, user.password)
-
-      if (user && passwordValid) {
-        return user
+        if (passwordValid) {
+          return user
+        } else {
+          throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
+        }
       } else {
-        throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
+        throw new HttpException(
+          'Email needs to be verified',
+          HttpStatus.FORBIDDEN
+        )
       }
     } catch (error) {
       throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
@@ -54,7 +61,7 @@ export class AuthService {
     }
   }
 
-  async createEmailToken(email: string): Promise<boolean> {
+  async createEmailToken(email: string): Promise<EmailVerificationDocument> {
     const emailVerification = await this.emailVerificationModel
       .findOne({ email })
       .exec()
@@ -68,25 +75,29 @@ export class AuthService {
         HttpStatus.INTERNAL_SERVER_ERROR
       )
     } else {
-      await this.emailVerificationModel.findOneAndUpdate(
-        { email },
-        {
-          email: email,
-          emailToken: (
-            Math.floor(Math.random() * 9000000) + 1000000
-          ).toString(), //Generate 7 digits number
-          timestamp: new Date(),
-        },
-        { upsert: true }
-      )
-      return true
+      const emailVerification = await this.emailVerificationModel
+        .findOneAndUpdate(
+          { email },
+          {
+            email: email,
+            emailToken: (
+              Math.floor(Math.random() * 9000000) + 1000000
+            ).toString(), //Generate 7 digits number
+            timestamp: new Date(),
+          },
+          { upsert: true }
+        )
+        .exec()
+      return emailVerification
     }
   }
 
   async sendEmailVerification(email: string): Promise<boolean> {
-    const emailVerfication = await this.emailVerificationModel.findOne({
-      email,
-    })
+    const emailVerfication = await this.emailVerificationModel
+      .findOne({
+        email,
+      })
+      .exec()
     if (emailVerfication && emailVerfication.emailToken) {
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_ENDPOINT,
@@ -112,8 +123,35 @@ export class AuthService {
           '>Click here to activate your account</a>', // html body
       }
 
-      const send = await transporter.sendMail(mailOptions)
+      try {
+        const send = await transporter.sendMail(mailOptions)
+        if (send.messageId) {
+          return true
+        }
+      } catch (error) {
+        throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST)
+      }
+    } else {
+      throw new HttpException('Email not found', HttpStatus.NOT_FOUND)
     }
-    return true
+  }
+
+  async verifyEmail(token: string): Promise<boolean> {
+    const emailVerify = await this.emailVerificationModel
+      .findOne({ emailToken: token })
+      .exec()
+    if (emailVerify && emailVerify.email) {
+      const user = await this.userModel
+        .findOne({ email: emailVerify.email })
+        .exec()
+      if (user) {
+        user.isEmailVerified = true
+        const savedUser = await user.save()
+        if (savedUser) {
+          await emailVerify.remove()
+          return true
+        }
+      }
+    }
   }
 }

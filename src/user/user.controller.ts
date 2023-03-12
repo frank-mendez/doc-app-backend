@@ -50,7 +50,10 @@ export class UserController {
       const user = await this.service.register(userRegisterDto)
       const emailSent = await this.authService.createEmailToken(user.email)
       if (emailSent) {
-        return user
+        const verifyEmail = await this.authService.sendEmailVerification(
+          emailSent.email
+        )
+        return verifyEmail
       }
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.NOT_ACCEPTABLE)
