@@ -14,6 +14,8 @@ import {
 import { UserRegisterDto } from './dto/user-register.dto'
 import * as bcrypt from 'bcryptjs'
 import { JwtAuthGuard } from '../auth/jwt.auth.guard'
+import * as _ from 'lodash'
+import { IResponse } from '../types'
 
 @Controller('users')
 export class UserController {
@@ -41,19 +43,22 @@ export class UserController {
   }
 
   @Post()
-  async register(@Body() userRegisterDto: UserRegisterDto) {
+  async register(@Body() userRegisterDto: UserRegisterDto): Promise<IResponse> {
     const salt = await bcrypt.genSalt()
     const hashedPassword = await bcrypt.hash(userRegisterDto.password, salt)
     userRegisterDto.password = hashedPassword
 
     try {
       const user = await this.service.register(userRegisterDto)
-      const emailSent = await this.authService.createEmailToken(user.email)
-      if (emailSent) {
-        const verifyEmail = await this.authService.sendEmailVerification(
-          emailSent.email
-        )
-        return verifyEmail
+      if (user) {
+        await this.authService.createEmailToken(user.email)
+        await this.authService.sendEmailVerification(user.email)
+        return {
+          data: {
+            message: 'Registered. Please verify your account on your email',
+            user: _.omit(user, ['password']),
+          },
+        }
       }
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.NOT_ACCEPTABLE)

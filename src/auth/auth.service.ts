@@ -11,6 +11,9 @@ import * as bcrypt from 'bcryptjs'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import * as nodemailer from 'nodemailer'
+import * as AWS from '@aws-sdk/client-ses'
+import { defaultProvider } from '@aws-sdk/credential-provider-node'
+import { SendRawEmailCommand } from '@aws-sdk/client-ses'
 
 @Injectable()
 export class AuthService {
@@ -26,19 +29,23 @@ export class AuthService {
     const { username, password } = authDto
     try {
       const user = await this.userService.findOne(username)
-      if (user && user.isEmailVerified) {
+      if (user) {
         const passwordValid = await bcrypt.compare(password, user.password)
 
         if (passwordValid) {
-          return user
+          if (user.isEmailVerified) {
+            return user
+          } else {
+            throw new HttpException(
+              'Email needs verification',
+              HttpStatus.FORBIDDEN
+            )
+          }
         } else {
           throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
         }
       } else {
-        throw new HttpException(
-          'Email needs to be verified',
-          HttpStatus.FORBIDDEN
-        )
+        throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
       }
     } catch (error) {
       throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
@@ -61,7 +68,7 @@ export class AuthService {
     }
   }
 
-  async createEmailToken(email: string): Promise<EmailVerificationDocument> {
+  async createEmailToken(email: string): Promise<boolean> {
     const emailVerification = await this.emailVerificationModel
       .findOne({ email })
       .exec()
@@ -75,7 +82,7 @@ export class AuthService {
         HttpStatus.INTERNAL_SERVER_ERROR
       )
     } else {
-      const emailVerification = await this.emailVerificationModel
+      await this.emailVerificationModel
         .findOneAndUpdate(
           { email },
           {
@@ -88,7 +95,7 @@ export class AuthService {
           { upsert: true }
         )
         .exec()
-      return emailVerification
+      return true
     }
   }
 
@@ -99,35 +106,31 @@ export class AuthService {
       })
       .exec()
     if (emailVerfication && emailVerfication.emailToken) {
+      const ses = new AWS.SES({
+        region: 'us-east-1',
+        credentialDefaultProvider: defaultProvider,
+      })
+
       const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_ENDPOINT,
-        port: Number(process.env.SMTP_PORT),
-        secure: true,
-        auth: {
-          user: process.env.SMTP_USERNAME,
-          pass: process.env.SMTP_PASSWORD,
-        },
+        SES: { ses, aws: { SendRawEmailCommand } },
       })
 
       const mailOptions = {
-        from: '"y" <' + process.env.BASE_URL + '>',
-        to: email, // list of receivers (separated by ,)
+        from: 'frankmendezresources@gmail.com',
+        to: 'frankmendezwebdev@gmail.com', // list of receivers (separated by ,)
         subject: 'Verify Email',
         text: 'Verify Email',
-        html:
-          'Hi! <br><br> Thanks for your registration<br><br>' +
-          '<a href=' +
-          process.env.BASE_URL +
-          '/auth/email/verify/' +
-          emailVerfication.emailToken +
-          '>Click here to activate your account</a>', // html body
+        html: `Congratulations on registering to ${process.env.COMPANY_NAME}. 
+        <br/> <a href='${process.env.BASE_URL}/auth/email/verify/${emailVerfication.emailToken}'>Click here to verify your account </a>`,
       }
 
       try {
-        const send = await transporter.sendMail(mailOptions)
-        if (send.messageId) {
-          return true
-        }
+        await transporter.sendMail(mailOptions, (err, info) => {
+          if (info.messageId) {
+            return true
+          }
+        })
+        return true
       } catch (error) {
         throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST)
       }

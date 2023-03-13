@@ -24,6 +24,8 @@
     "migrate:down": "migrate --migrations-dir=\"./src/migrations\" --compiler=\"ts:./src/migrations-utils/ts-compiler.js\" down"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.289.0",
+    "@aws-sdk/credential-provider-node": "^3.289.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.0.0",
@@ -32,12 +34,14 @@
     "@nestjs/passport": "^9.0.3",
     "@nestjs/platform-express": "^9.0.0",
     "@types/bcrypt": "^5.0.0",
+    "@types/lodash": "^4.14.191",
     "@types/nodemailer": "^6.4.7",
     "@vendia/serverless-express": "^4.10.1",
     "aws-lambda": "^1.0.7",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "lodash": "^4.17.21",
     "migrate": "^1.8.0",
     "mongodb": "^5.1.0",
     "mongoose": "^6.10.0",

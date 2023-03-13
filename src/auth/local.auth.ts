@@ -3,7 +3,8 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
 import { Strategy } from 'passport-local'
 import { PassportStrategy } from '@nestjs/passport'
 import { AuthService } from './auth.service'
-import { UserDocument } from '../schemas/user.schema'
+import { IResponse } from '../types'
+import * as _ from 'lodash'
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -14,7 +15,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     })
   }
 
-  async validate(username: string, password: string): Promise<UserDocument> {
+  async validate(username: string, password: string): Promise<IResponse> {
     const validatePayload = new AuthDto()
     validatePayload.username = username
     validatePayload.password = password
@@ -22,6 +23,10 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED)
     }
-    return user
+    return {
+      data: {
+        user: _.omit(user, ['password']),
+      },
+    }
   }
 }
