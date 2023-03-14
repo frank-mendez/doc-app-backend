@@ -1,7 +1,8 @@
+import { EmailService } from './../email/email.service'
 import {
   EmailVerification,
   EmailVerificationSchema,
-} from './../schemas/emailverification.schema'
+} from '../schemas/email-verification.schema'
 import { PassportModule } from '@nestjs/passport'
 import { User, UserSchema } from 'src/schemas/user.schema'
 import { LocalStrategy } from './local.auth'
@@ -31,7 +32,13 @@ dotenv.config()
       { name: EmailVerification.name, schema: EmailVerificationSchema },
     ]),
   ],
-  providers: [AuthService, UserService, LocalStrategy, JwtStrategy],
+  providers: [
+    AuthService,
+    UserService,
+    LocalStrategy,
+    JwtStrategy,
+    EmailService,
+  ],
   exports: [AuthService],
   controllers: [AuthController],
 })

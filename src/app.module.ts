@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { MongooseConfigService } from './mongoose/mongoose.service';
 import { AuthModule } from './auth/auth.module';
+import { EmailService } from './email/email.service';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { AuthModule } from './auth/auth.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, EmailService],
 })
 export class AppModule {}

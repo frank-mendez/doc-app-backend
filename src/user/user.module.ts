@@ -1,9 +1,9 @@
-import { AuthModule } from './../auth/auth.module'
+import { EmailService } from './../email/email.service'
 import { AuthService } from './../auth/auth.service'
 import {
   EmailVerification,
   EmailVerificationSchema,
-} from './../schemas/emailverification.schema'
+} from '../schemas/email-verification.schema'
 import { JwtService } from '@nestjs/jwt'
 import { Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
@@ -20,7 +20,7 @@ import { JwtModule } from '@nestjs/jwt/dist'
     ]),
     JwtModule,
   ],
-  providers: [UserService, JwtService, AuthService],
+  providers: [UserService, JwtService, AuthService, EmailService],
   controllers: [UserController],
 })
 export class UserModule {}

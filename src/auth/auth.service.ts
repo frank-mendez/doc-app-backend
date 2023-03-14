@@ -1,7 +1,8 @@
+import { EmailService } from './../email/email.service'
 import {
   EmailVerification,
   EmailVerificationDocument,
-} from './../schemas/emailverification.schema'
+} from '../schemas/email-verification.schema'
 import { User, UserDocument } from '../schemas/user.schema'
 import { AuthDto } from './dto/auth.dto'
 import { JwtService } from '@nestjs/jwt'
@@ -10,10 +11,6 @@ import { UserService } from '../user/user.service'
 import * as bcrypt from 'bcryptjs'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import * as nodemailer from 'nodemailer'
-import * as AWS from '@aws-sdk/client-ses'
-import { defaultProvider } from '@aws-sdk/credential-provider-node'
-import { SendRawEmailCommand } from '@aws-sdk/client-ses'
 
 @Injectable()
 export class AuthService {
@@ -22,34 +19,27 @@ export class AuthService {
     @InjectModel(EmailVerification.name)
     private readonly emailVerificationModel: Model<EmailVerificationDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private readonly emailService: EmailService
   ) {}
 
   async validateUser(authDto: AuthDto): Promise<UserDocument> {
     const { username, password } = authDto
-    try {
-      const user = await this.userService.findOne(username)
-      if (user) {
-        const passwordValid = await bcrypt.compare(password, user.password)
+    const user = await this.userService.findOne(username)
+    if (user) {
+      const passwordValid = await bcrypt.compare(password, user.password)
 
-        if (passwordValid) {
-          if (user.isEmailVerified) {
-            return user
-          } else {
-            throw new HttpException(
-              'Email needs verification',
-              HttpStatus.FORBIDDEN
-            )
-          }
-        } else {
-          throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
-        }
+      if (passwordValid && user.isEmailVerified) {
+        return user
       } else {
-        throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
+        throw new HttpException(
+          `${passwordValid ? 'Invalid Credentials' : 'Verify account'}`,
+          HttpStatus.FORBIDDEN
+        )
       }
-    } catch (error) {
-      throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
     }
+
+    throw new HttpException('Invalid Credentials', HttpStatus.FORBIDDEN)
   }
 
   async login(user: UserDocument) {
@@ -106,15 +96,6 @@ export class AuthService {
       })
       .exec()
     if (emailVerfication && emailVerfication.emailToken) {
-      const ses = new AWS.SES({
-        region: 'us-east-1',
-        credentialDefaultProvider: defaultProvider,
-      })
-
-      const transporter = nodemailer.createTransport({
-        SES: { ses, aws: { SendRawEmailCommand } },
-      })
-
       const mailOptions = {
         from: 'frankmendezresources@gmail.com',
         to: 'frankmendezwebdev@gmail.com', // list of receivers (separated by ,)
@@ -125,12 +106,8 @@ export class AuthService {
       }
 
       try {
-        await transporter.sendMail(mailOptions, (err, info) => {
-          if (info.messageId) {
-            return true
-          }
-        })
-        return true
+        const send = await this.emailService.sendEmail(mailOptions)
+        return send
       } catch (error) {
         throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST)
       }
