@@ -19,7 +19,7 @@ export class EmailService {
 
     try {
       await transporter.sendMail(mailOptions, (err, info) => {
-        if (info.messageId) {
+        if (info) {
           return true
         } else if (err) {
           return false

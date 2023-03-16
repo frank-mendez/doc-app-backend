@@ -1,3 +1,7 @@
+import {
+  ForgotPassword,
+  ForgotPasswordSchema,
+} from './../schemas/forgot-password.schema'
 import { EmailService } from './../email/email.service'
 import { AuthService } from './../auth/auth.service'
 import {
@@ -17,6 +21,7 @@ import { JwtModule } from '@nestjs/jwt/dist'
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: EmailVerification.name, schema: EmailVerificationSchema },
+      { name: ForgotPassword.name, schema: ForgotPasswordSchema },
     ]),
     JwtModule,
   ],

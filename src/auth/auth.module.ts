@@ -1,3 +1,7 @@
+import {
+  ForgotPassword,
+  ForgotPasswordSchema,
+} from './../schemas/forgot-password.schema'
 import { EmailService } from './../email/email.service'
 import {
   EmailVerification,
@@ -30,6 +34,7 @@ dotenv.config()
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: EmailVerification.name, schema: EmailVerificationSchema },
+      { name: ForgotPassword.name, schema: ForgotPasswordSchema },
     ]),
   ],
   providers: [

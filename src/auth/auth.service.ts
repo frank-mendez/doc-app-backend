@@ -1,3 +1,7 @@
+import {
+  ForgotPassword,
+  ForgotPasswordDocument,
+} from './../schemas/forgot-password.schema'
 import { EmailService } from './../email/email.service'
 import {
   EmailVerification,
@@ -11,6 +15,7 @@ import { UserService } from '../user/user.service'
 import * as bcrypt from 'bcryptjs'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
+import { v4 as uuid } from 'uuid'
 
 @Injectable()
 export class AuthService {
@@ -20,7 +25,9 @@ export class AuthService {
     private readonly emailVerificationModel: Model<EmailVerificationDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private jwtService: JwtService,
-    private readonly emailService: EmailService
+    private readonly emailService: EmailService,
+    @InjectModel(ForgotPassword.name)
+    private readonly forgotPasswordModel: Model<ForgotPasswordDocument>
   ) {}
 
   async validateUser(authDto: AuthDto): Promise<UserDocument> {
@@ -96,12 +103,13 @@ export class AuthService {
       })
       .exec()
     if (emailVerfication && emailVerfication.emailToken) {
+      const user = await this.userService.findOne(emailVerfication.email)
       const mailOptions = {
-        from: 'frankmendezresources@gmail.com',
-        to: 'frankmendezwebdev@gmail.com', // list of receivers (separated by ,)
+        from: `frankmendezresources@gmail.com`,
+        to: emailVerfication.email, // list of receivers (separated by ,)
         subject: 'Verify Email',
         text: 'Verify Email',
-        html: `Congratulations on registering to ${process.env.COMPANY_NAME}. 
+        html: `Hi ${user.firstName}! Congratulations on registering to ${process.env.COMPANY_NAME}. 
         <br/> <a href='${process.env.BASE_URL}/auth/email/verify/${emailVerfication.emailToken}'>Click here to verify your account </a>`,
       }
 
@@ -132,6 +140,62 @@ export class AuthService {
           return true
         }
       }
+    }
+  }
+
+  async createForgotPasswordToken(
+    email: string
+  ): Promise<ForgotPasswordDocument> {
+    const forgotPassword = await this.forgotPasswordModel.findOne({ email })
+    if (
+      forgotPassword &&
+      (new Date().getTime() - forgotPassword.timestamp.getTime()) / 60000 < 15
+    ) {
+      throw new HttpException(
+        'Forgot password email was already sent',
+        HttpStatus.CONFLICT
+      )
+    } else {
+      try {
+        const saveForgotPassword = await new this.forgotPasswordModel({
+          email: email,
+          newPasswordToken: uuid(),
+          timestamp: new Date(),
+        }).save()
+
+        return saveForgotPassword
+      } catch (error) {
+        throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST)
+      }
+    }
+  }
+
+  async sendEmailForgotPassword(email: string): Promise<boolean> {
+    const user = await this.userService.findOne(email)
+    if (user) {
+      const tokenModel = await this.createForgotPasswordToken(email)
+      if (tokenModel && tokenModel.newPasswordToken) {
+        const mailOptions = {
+          from: `frankmendezresources@gmail.com`,
+          to: tokenModel.email, // list of receivers (separated by ,)
+          subject: 'Forgot Password',
+          text: 'Forgot Password',
+          html: `Hi ${user.firstName}!<br /> You requested to reset your forgotten password. 
+        <br/> <a href='${process.env.BASE_URL}/auth/email/reset-password/${tokenModel.newPasswordToken}'>Click here to reset your password </a>`,
+        }
+
+        try {
+          const send = await this.emailService.sendEmail(mailOptions)
+          return send
+        } catch (error) {
+          throw new HttpException(
+            'Something went wrong',
+            HttpStatus.BAD_REQUEST
+          )
+        }
+      }
+    } else {
+      throw new HttpException('User not found', HttpStatus.FORBIDDEN)
     }
   }
 }
