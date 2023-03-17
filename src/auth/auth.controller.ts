@@ -53,4 +53,20 @@ export class AuthController {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
+
+  @Get('/email/forgot-password/:email')
+  async sendEmailForgotPassword(@Param('email') email: string) {
+    try {
+      const sendEmail = await this.authService.sendEmailForgotPassword(email)
+      if (sendEmail) {
+        return {
+          data: {
+            message: 'Request Password Sent',
+          },
+        }
+      }
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
 }
