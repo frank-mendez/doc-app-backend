@@ -206,7 +206,7 @@ export class AuthService {
   }
 
   async checkPassword(email: string, password: string) {
-    var userFromDb = await this.userModel.findOne({ email: email })
+    const userFromDb = await this.userModel.findOne({ email: email })
     if (!userFromDb)
       throw new HttpException('LOGIN.USER_NOT_FOUND', HttpStatus.NOT_FOUND)
 

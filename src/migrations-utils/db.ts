@@ -1,6 +1,6 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient } from 'mongodb'
 
 export const getDb = async () => {
-  const client: any = await MongoClient.connect(process.env.MONGODB_URL);
-  return client.db();
-};
+  const client: any = await MongoClient.connect(process.env.MONGODB_URL)
+  return client.db()
+}

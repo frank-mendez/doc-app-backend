@@ -1,8 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import {
-  MongooseModuleOptions,
-  MongooseOptionsFactory,
-} from '@nestjs/mongoose';
+import { Injectable } from '@nestjs/common'
+import { MongooseModuleOptions, MongooseOptionsFactory } from '@nestjs/mongoose'
 
 @Injectable()
 export class MongooseConfigService implements MongooseOptionsFactory {
@@ -14,6 +11,6 @@ export class MongooseConfigService implements MongooseOptionsFactory {
       autoIndex: true,
       autoCreate: true,
       dbName: process.env.MONGODB_DBNAME,
-    };
+    }
   }
 }

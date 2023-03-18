@@ -4,23 +4,23 @@ import {
   IsOptional,
   IsStrongPassword,
   IsNotEmpty,
-} from 'class-validator';
+} from 'class-validator'
 
 export class UserRegisterDto {
   @IsString()
   @IsNotEmpty()
-  firstName: string;
+  firstName: string
 
   @IsString()
   @IsNotEmpty()
-  lastName: string;
+  lastName: string
 
   @IsEmail()
-  email: string;
+  email: string
 
   @IsStrongPassword()
-  password: string;
+  password: string
 
   @IsOptional()
-  address: string;
+  address: string
 }
