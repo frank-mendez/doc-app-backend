@@ -1,3 +1,5 @@
+import { ForgotPasswordDto } from './dto/forgot-password.dto'
+import { UserService } from './../user/user.service'
 import { AuthService } from './auth.service'
 import {
   Controller,
@@ -8,13 +10,17 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Body,
 } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { IResponse } from '../types'
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private readonly userService: UserService
+  ) {}
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
@@ -55,7 +61,9 @@ export class AuthController {
   }
 
   @Get('/email/forgot-password/:email')
-  async sendEmailForgotPassword(@Param('email') email: string) {
+  async sendEmailForgotPassword(
+    @Param('email') email: string
+  ): Promise<IResponse> {
     try {
       const sendEmail = await this.authService.sendEmailForgotPassword(email)
       if (sendEmail) {
@@ -67,6 +75,66 @@ export class AuthController {
       }
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  @Post('/email/reset-password')
+  async resetPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto
+  ): Promise<IResponse> {
+    if (forgotPasswordDto.email && forgotPasswordDto.currentPassword) {
+      const isValidPassword = await this.authService.checkPassword(
+        forgotPasswordDto.email,
+        forgotPasswordDto.currentPassword
+      )
+      if (isValidPassword) {
+        try {
+          const updatedPassword = await this.userService.setPassword(
+            forgotPasswordDto.email,
+            forgotPasswordDto.newPassword
+          )
+          if (updatedPassword) {
+            return {
+              data: {
+                message: 'Password successfully changed',
+              },
+            }
+          }
+        } catch (error) {
+          throw new HttpException(
+            'Something went wrong',
+            HttpStatus.INTERNAL_SERVER_ERROR
+          )
+        }
+      }
+    } else if (forgotPasswordDto.newPasswordToken) {
+      try {
+        const validForgotPassword = await this.authService.getForgotPassword(
+          forgotPasswordDto.newPasswordToken
+        )
+        if (validForgotPassword) {
+          const forgotPasswordModel = await this.authService.getForgotPassword(
+            forgotPasswordDto.newPasswordToken
+          )
+          const updatedPassword = await this.userService.setPassword(
+            forgotPasswordModel.email,
+            forgotPasswordDto.newPassword
+          )
+          if (updatedPassword) {
+            await forgotPasswordModel.remove()
+          }
+          return {
+            data: {
+              message: 'Password successfully changed',
+            },
+          }
+        }
+      } catch (error) {
+        throw new HttpException(
+          'Something went wrong',
+          HttpStatus.INTERNAL_SERVER_ERROR
+        )
+      }
     }
   }
 }

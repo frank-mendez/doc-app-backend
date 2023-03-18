@@ -198,4 +198,18 @@ export class AuthService {
       throw new HttpException('User not found', HttpStatus.FORBIDDEN)
     }
   }
+
+  async getForgotPassword(
+    newPasswordToken: string
+  ): Promise<ForgotPasswordDocument> {
+    return await this.forgotPasswordModel.findOne({ newPasswordToken })
+  }
+
+  async checkPassword(email: string, password: string) {
+    var userFromDb = await this.userModel.findOne({ email: email })
+    if (!userFromDb)
+      throw new HttpException('LOGIN.USER_NOT_FOUND', HttpStatus.NOT_FOUND)
+
+    return await bcrypt.compare(password, userFromDb.password)
+  }
 }
