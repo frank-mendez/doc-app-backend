@@ -105,7 +105,7 @@ export class AuthService {
     if (emailVerfication && emailVerfication.emailToken) {
       const user = await this.userService.findOne(emailVerfication.email)
       const mailOptions = {
-        from: `frankmendezresources@gmail.com`,
+        from: 'support@frankmendezfullstack.site',
         to: emailVerfication.email, // list of receivers (separated by ,)
         subject: 'Verify Email',
         text: 'Verify Email',
@@ -176,7 +176,7 @@ export class AuthService {
       const tokenModel = await this.createForgotPasswordToken(email)
       if (tokenModel && tokenModel.newPasswordToken) {
         const mailOptions = {
-          from: `frankmendezresources@gmail.com`,
+          from: 'support@frankmendezfullstack.site',
           to: tokenModel.email, // list of receivers (separated by ,)
           subject: 'Forgot Password',
           text: 'Forgot Password',
