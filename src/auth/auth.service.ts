@@ -57,7 +57,6 @@ export class AuthService {
       lastName: user.lastName,
       isEmailVerified: user.isEmailVerified,
     }
-    console.log('payload', payload)
     return {
       data: {
         access_token: this.jwtService.sign(payload),
