@@ -110,8 +110,10 @@ export class AuthService {
         subject: 'Verify Email',
         text: 'Verify Email',
         html: `Hi ${user.firstName}! Congratulations on registering to ${process.env.COMPANY_NAME}. 
-        <br/> <a href='${process.env.BASE_URL}/auth/email/verify/${emailVerfication.emailToken}'>Click here to verify your account </a>`,
+        <br/> <a href='${process.env.REACT_URL}/email/verify/${emailVerfication.emailToken}'>Click here to verify your account </a>`,
       }
+
+      //NOTE: Frontend should call /auth/email/verify/${emailVerfication.emailToken} to verify email
 
       try {
         const send = await this.emailService.sendEmail(mailOptions)
@@ -151,51 +153,35 @@ export class AuthService {
       forgotPassword &&
       (new Date().getTime() - forgotPassword.timestamp.getTime()) / 60000 < 15
     ) {
-      throw new HttpException(
-        'Forgot password email was already sent',
-        HttpStatus.CONFLICT
-      )
+      throw new Error('Forgot password email was already sent')
     } else {
-      try {
-        const saveForgotPassword = await new this.forgotPasswordModel({
-          email: email,
-          newPasswordToken: uuid(),
-          timestamp: new Date(),
-        }).save()
+      const saveForgotPassword = await new this.forgotPasswordModel({
+        email: email,
+        newPasswordToken: uuid(),
+        timestamp: new Date(),
+      }).save()
 
-        return saveForgotPassword
-      } catch (error) {
-        throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST)
-      }
+      return saveForgotPassword
     }
   }
 
   async sendEmailForgotPassword(email: string): Promise<boolean> {
     const user = await this.userService.findOne(email)
-    if (user) {
-      const tokenModel = await this.createForgotPasswordToken(email)
-      if (tokenModel && tokenModel.newPasswordToken) {
-        const mailOptions = {
-          from: 'support@frankmendezfullstack.site',
-          to: tokenModel.email, // list of receivers (separated by ,)
-          subject: 'Forgot Password',
-          text: 'Forgot Password',
-          html: `Hi ${user.firstName}!<br /> You requested to reset your forgotten password. 
-        <br/> <a href='${process.env.BASE_URL}/auth/email/reset-password/${tokenModel.newPasswordToken}'>Click here to reset your password </a>`,
-        }
-
-        try {
-          const send = await this.emailService.sendEmail(mailOptions)
-          return send
-        } catch (error) {
-          throw new HttpException(
-            'Something went wrong',
-            HttpStatus.BAD_REQUEST
-          )
-        }
+    const tokenModel = await this.createForgotPasswordToken(email)
+    if (tokenModel && tokenModel.newPasswordToken) {
+      const mailOptions = {
+        from: 'support@frankmendezfullstack.site',
+        to: tokenModel.email, // list of receivers (separated by ,)
+        subject: 'Forgot Password',
+        text: 'Forgot Password',
+        html: `Hi ${user.firstName}!<br /> You requested to reset your forgotten password. 
+        <br/> <a href='${process.env.REACT_URL}/reset-password/${tokenModel.newPasswordToken}'>Click here to reset your password </a>`,
       }
-    } else {
-      throw new HttpException('User not found', HttpStatus.FORBIDDEN)
+
+      //NOTE: Frontend should call the endpoint /auth/email/reset-password/${tokenModel.newPasswordToken}
+
+      const send = await this.emailService.sendEmail(mailOptions)
+      return send
     }
   }
 

@@ -17,17 +17,13 @@ export class EmailService {
       SES: { ses, aws: { SendRawEmailCommand } },
     })
 
-    try {
-      await transporter.sendMail(mailOptions, (err, info) => {
-        if (info) {
-          return true
-        } else if (err) {
-          return false
-        }
-      })
-      return true
-    } catch (error) {
-      throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST)
-    }
+    await transporter.sendMail(mailOptions, (err, info) => {
+      if (info) {
+        return true
+      } else if (err) {
+        return false
+      }
+    })
+    return true
   }
 }

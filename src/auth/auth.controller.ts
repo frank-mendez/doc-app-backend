@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { IResponse } from '../types'
+import { ForgotPasswordEmailDto } from './dto/forgot-password-email.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -60,10 +61,11 @@ export class AuthController {
     }
   }
 
-  @Get('/email/forgot-password/:email')
+  @Post('/email/forgot-password')
   async sendEmailForgotPassword(
-    @Param('email') email: string
+    @Body() body: ForgotPasswordEmailDto
   ): Promise<IResponse> {
+    const { email } = body
     try {
       const sendEmail = await this.authService.sendEmailForgotPassword(email)
       if (sendEmail) {
@@ -74,7 +76,10 @@ export class AuthController {
         }
       }
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(
+        'Reset Password request already sent',
+        HttpStatus.CONFLICT
+      )
     }
   }
 
