@@ -28,6 +28,18 @@ export class User {
 
   @Prop({ required: true, default: Date.now(), type: Date })
   updatedAt: Date
+
+  @Prop({ required: true, default: false })
+  isDoctor: boolean
+
+  @Prop({ required: true, default: false })
+  isAdmin: boolean
+
+  @Prop({ required: false, default: [] })
+  seenNotifications: any[]
+
+  @Prop({ required: false, default: [] })
+  unseenNotifications: any[]
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)
