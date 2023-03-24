@@ -56,6 +56,8 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       isEmailVerified: user.isEmailVerified,
+      isAdmin: user.isAdmin,
+      isDoctor: user.isDoctor,
     }
     return {
       data: {
