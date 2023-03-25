@@ -7,6 +7,7 @@ import { UserModule } from './user/user.module'
 import { MongooseConfigService } from './mongoose/mongoose.service'
 import { AuthModule } from './auth/auth.module'
 import { EmailService } from './email/email.service'
+import { DoctorModule } from './doctor/doctor.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { EmailService } from './email/email.service'
     }),
     UserModule,
     AuthModule,
+    DoctorModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
