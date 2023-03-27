@@ -42,6 +42,16 @@ export class UserController {
     return await this.service.getUserDetail(id)
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/admin/unseen-notifications')
+  async getAdminUnseenNotifications() {
+    try {
+      return await this.service.getAdminUnseenNotifications()
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
+
   @Post()
   async register(@Body() userRegisterDto: UserRegisterDto): Promise<IResponse> {
     const salt = await bcrypt.genSalt()

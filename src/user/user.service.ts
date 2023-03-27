@@ -50,12 +50,18 @@ export class UserService {
   }
 
   async updateAdminNotifications(notification: any): Promise<UserDocument> {
-    const admin = await this.model.findOne({ isAdmin: true })
+    const admin = await this.model.findOne({ isAdmin: true }).exec()
     const unseenNotifications = admin.unseenNotifications
     unseenNotifications.push(notification)
     const updatedNotifications = await this.model.findByIdAndUpdate(admin._id, {
       unseenNotifications,
     })
     return updatedNotifications
+  }
+
+  async getAdminUnseenNotifications(): Promise<any[]> {
+    const admin = await this.model.findOne({ isAdmin: true }).exec()
+    const unseenNotifications = admin.unseenNotifications
+    return unseenNotifications
   }
 }
