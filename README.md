@@ -8,6 +8,7 @@ A backend service for an appointment booking system that focus on Medical Doctor
 - Email Verification using AWS SES
 - Forgot Password
 - Reset Password
+- Notification System
 
 ## Tech Stack
 
