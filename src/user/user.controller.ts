@@ -8,6 +8,7 @@ import {
   HttpException,
   HttpStatus,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common'
@@ -47,6 +48,26 @@ export class UserController {
   async getAdminUnseenNotifications() {
     try {
       return await this.service.getAdminUnseenNotifications()
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('/remove-unseen-notification/:id')
+  async clearAllUnseenNotifications(@Param('id') id: string) {
+    try {
+      return await this.service.clearAllUnseenNotifications(id)
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('/remove-seen-notification/:id')
+  async clearALlSeenNotifications(@Param('id') id: string) {
+    try {
+      return await this.service.clearALlSeenNotifications(id)
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     }

@@ -64,4 +64,19 @@ export class UserService {
     const unseenNotifications = admin.unseenNotifications
     return unseenNotifications
   }
+
+  async clearAllUnseenNotifications(id: string): Promise<UserDocument> {
+    const user = await this.model.findById(id).exec()
+    user.seenNotifications = user.unseenNotifications
+    user.unseenNotifications = []
+    user.save()
+    return user
+  }
+
+  async clearALlSeenNotifications(id: string): Promise<UserDocument> {
+    const user = await this.model.findById(id).exec()
+    user.seenNotifications = []
+    user.save()
+    return user
+  }
 }
