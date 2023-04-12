@@ -54,6 +54,16 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('/admin/seen-notifications')
+  async getAdminSeenNotifications() {
+    try {
+      return await this.service.getAdminSeenNotifications()
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch('/remove-unseen-notification/:id')
   async clearAllUnseenNotifications(@Param('id') id: string) {
     try {

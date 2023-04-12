@@ -65,6 +65,12 @@ export class UserService {
     return unseenNotifications
   }
 
+  async getAdminSeenNotifications(): Promise<any[]> {
+    const admin = await this.model.findOne({ isAdmin: true }).exec()
+    const seenNotifications = admin.seenNotifications
+    return seenNotifications
+  }
+
   async clearAllUnseenNotifications(id: string): Promise<UserDocument> {
     const user = await this.model.findById(id).exec()
     user.seenNotifications = user.unseenNotifications
